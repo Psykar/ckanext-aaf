@@ -1,7 +1,6 @@
 import hashlib
 import uuid
 
-import ckan.plugins as p
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import jwt
@@ -10,26 +9,25 @@ from pylons import config
 from pylons import session
 
 
-def decode_token(request):
-    response = p.toolkit.response
+def get_issuer():
     if config.get('debug'):
         issuer = 'https://rapid.test.aaf.edu.au'
     else:
         issuer = 'https://rapid.aaf.edu.au'
+    return issuer
+
+
+def decode_token(request):
+    issuer = get_issuer()
 
     options = {'require_exp': True, 'require_nbf': True, 'require_iat': True}
-    try:
-        verified_jwt = jwt.decode(
-            request.POST['assertion'],
-            config['ckanext.aaf.secret'],
-            options=options,
-            audience=config['ckanext.aaf.aud'],
-            issuer=issuer,
-        )
-    except jwt.ExpiredSignature:
-        response.status = 403
-        response.response.write('Error: Security cookie has expired')
-        return response
+    verified_jwt = jwt.decode(
+        request.POST['assertion'],
+        config['ckanext.aaf.secret'],
+        options=options,
+        audience=config['ckanext.aaf.aud'],
+        issuer=issuer,
+    )
 
     return verified_jwt
 
@@ -39,13 +37,13 @@ def login_with_token(token):
     user_unique_id = token['sub']
     try:
         user = User.by_openid(user_unique_id)
-    except p.toolkit.ObjectNotFound:
+    except toolkit.ObjectNotFound:
         # Create the user.
         # The AAF id can contain invalid characters (for a ckan username)
         # So generate something safe and reasonably unlikely to collide
         # TODO (maybe use a uuid instead?)
         username = hashlib.md5(user_unique_id).hexdigest()
-        user = p.toolkit.get_action('user_create')(
+        user = toolkit.get_action('user_create')(
             context={'ignore_auth': True},
             data_dict={
                 'name': username,
@@ -60,7 +58,7 @@ def login_with_token(token):
     if user:
         session['aaf-user'] = user.name
         session.save()
-    p.toolkit.redirect_to(controller='user', action='dashboard')
+    toolkit.redirect_to(controller='user', action='dashboard')
 
 
 class AafPlugin(plugins.SingletonPlugin):

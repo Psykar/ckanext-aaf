@@ -82,9 +82,9 @@ All the settings are required::
 
 For example (these settings will not work, register your own application!)::
 
-    ckan.aaf.url = https://rapid.aaf.edu.au/jwt/authnrequest/research/xxxxyyyzzzz
-    ckan.aaf.secret = asdfasdf#$#$#$asdfasdf
-    ckan.aaf.aud = http://myappurl.edu.au
+    ckanext.aaf.url = https://rapid.aaf.edu.au/jwt/authnrequest/research/xxxxyyyzzzz
+    ckanext.aaf.secret = asdfasdf#$#$#$asdfasdf
+    ckanext.aaf.aud = http://myappurl.edu.au
 
 
 ------------------------
@@ -97,6 +97,7 @@ do::
     git clone https://github.com/Psykar/ckanext-aaf.git
     cd ckanext-aaf
     pip install -e .
+    pip install -r dev-requirements.txt
 
 -----------------
 Running the Tests
