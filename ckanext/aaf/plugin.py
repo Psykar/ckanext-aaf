@@ -21,9 +21,9 @@ def decode_token(request):
     try:
         verified_jwt = jwt.decode(
             request.POST['assertion'],
-            config['ckan.aaf.secret'],
+            config['ckanext.aaf.secret'],
             options=options,
-            audience=config['ckan.aaf.aud'],
+            audience=config['ckanext.aaf.aud'],
             issuer=issuer,
         )
     except jwt.ExpiredSignature:

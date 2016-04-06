@@ -32,17 +32,15 @@
 ckanext-aaf
 =============
 
-.. Put a description of your extension here:
-   What does it do? What features does it have?
-   Consider including some screenshots or embedding a video!
-
+.. Allows AAF (Australian Acceess Federation) authentication to log into a CKAN installation.
 
 ------------
 Requirements
 ------------
 
-For example, you might want to mention here which versions of CKAN this
-extension works with.
+Tested with CKAN 2.5.1, should be fairly easy to port across versions as the codebase is quite small - PR's welcome!
+Requires an AAF 'Rapid Conect' application to be setup (see https://rapid.aaf.edu.au/ or https://rapid.test.aaf.edu.au/)
+For a live installation, will require SSL (as AAF will not allow callbacks to a non SSL URL)
 
 
 ------------
@@ -67,7 +65,9 @@ To install ckanext-aaf:
    config file (by default the config file is located at
    ``/etc/ckan/default/production.ini``).
 
-4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
+4. Setup config settings (described below), required to decode the JWT tokens passed back by AAF.
+
+5. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
 
      sudo service apache2 reload
 
@@ -76,11 +76,17 @@ To install ckanext-aaf:
 Config Settings
 ---------------
 
-Document any optional config settings here. For example::
+All the settings are required::
 
-    # The minimum number of hours to wait before re-checking a resource
-    # (optional, default: 24).
-    ckanext.aaf.some_setting = some_default_value
+    ckanext.aaf.url = The unique URL given by AAF Rapid Connect (get one from rapid.aaf.edu.au or rapid.test.aaf.edu.au)
+    ckanext.aaf.secret = The secret used to set up the above URL
+    ckanext.aaf.aud = The URL of your application, as provided to Rapid Connect (doesn't have to match the callback URL)
+
+For example (these settings will not work, register your own application!)::
+
+    ckan.aaf.url = https://rapid.aaf.edu.au/jwt/authnrequest/research/xxxxyyyzzzz
+    ckan.aaf.secret = asdfasdf#$#$#$asdfasdf
+    ckan.aaf.aud = http://myappurl.edu.au
 
 
 ------------------------
@@ -92,9 +98,7 @@ do::
 
     git clone https://github.com/Psykar/ckanext-aaf.git
     cd ckanext-aaf
-    python setup.py develop
-    pip install -r dev-requirements.txt
-
+    pip install -e .
 
 -----------------
 Running the Tests

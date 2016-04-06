@@ -11,7 +11,7 @@ class AAFController(user.UserController):
         # Either send a request off to AAF, or handle a POST response from AAF
         request = p.toolkit.request
         if request.method != 'POST':
-            p.toolkit.redirect_to(config['ckan.aaf.url'])
+            p.toolkit.redirect_to(config['ckanext.aaf.url'])
         else:
             token = decode_token(request)
             login_with_token(token)
