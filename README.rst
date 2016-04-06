@@ -32,7 +32,7 @@
 ckanext-aaf
 =============
 
-.. Allows AAF (Australian Acceess Federation) authentication to log into a CKAN installation.
+Allows AAF (Australian Acceess Federation) authentication to log into a CKAN installation.
 
 ------------
 Requirements
@@ -46,10 +46,6 @@ For a live installation, will require SSL (as AAF will not allow callbacks to a 
 ------------
 Installation
 ------------
-
-.. Add any additional install steps to the list below.
-   For example installing any non-Python dependencies or adding any required
-   config settings.
 
 To install ckanext-aaf:
 
