@@ -5,32 +5,34 @@
 .. image:: https://travis-ci.org/Psykar/ckanext-aaf.svg?branch=master
     :target: https://travis-ci.org/Psykar/ckanext-aaf
 
-.. image:: https://coveralls.io/repos/Psykar/ckanext-aaf/badge.svg
+.. image:: https://coveralls.io/repos/github/Psykar/ckanext-aaf/badge.svg
   :target: https://coveralls.io/r/Psykar/ckanext-aaf
 
-.. image:: https://pypip.in/download/ckanext-aaf/badge.svg
-    :target: https://pypi.python.org/pypi//ckanext-aaf/
+
+
+.. image:: https://img.shields.io/pypi/dm/ckanext-aaf.svg
+    :target: https://pypi.python.org/pypi/ckanext-aaf/
     :alt: Downloads
 
-.. image:: https://pypip.in/version/ckanext-aaf/badge.svg
+.. image:: https://img.shields.io/pypi/v/ckanext-aaf.svg
     :target: https://pypi.python.org/pypi/ckanext-aaf/
     :alt: Latest Version
 
-.. image:: https://pypip.in/py_versions/ckanext-aaf/badge.svg
+.. image:: https://img.shields.io/pypi/pyversions/ckanext-aaf.svg
     :target: https://pypi.python.org/pypi/ckanext-aaf/
     :alt: Supported Python versions
 
-.. image:: https://pypip.in/status/ckanext-aaf/badge.svg
+.. image:: https://img.shields.io/pypi/status/ckanext-aaf.svg
     :target: https://pypi.python.org/pypi/ckanext-aaf/
     :alt: Development Status
 
-.. image:: https://pypip.in/license/ckanext-aaf/badge.svg
+.. image:: https://img.shields.io/pypi/l/ckanext-aaf.svg
     :target: https://pypi.python.org/pypi/ckanext-aaf/
     :alt: License
 
-=============
+===========
 ckanext-aaf
-=============
+===========
 
 Allows AAF (Australian Acceess Federation) authentication to log into a CKAN installation.
 
@@ -110,9 +112,9 @@ coverage installed in your virtualenv (``pip install coverage``) then run::
     nosetests --nologcapture --with-pylons=test.ini --with-coverage --cover-package=ckanext.aaf --cover-inclusive --cover-erase --cover-tests
 
 
----------------------------------
+-------------------------------
 Registering ckanext-aaf on PyPI
----------------------------------
+-------------------------------
 
 ckanext-aaf should be availabe on PyPI as
 https://pypi.python.org/pypi/ckanext-aaf. If that link doesn't work, then
@@ -139,9 +141,9 @@ steps:
        git push --tags
 
 
-----------------------------------------
+--------------------------------------
 Releasing a New Version of ckanext-aaf
-----------------------------------------
+--------------------------------------
 
 ckanext-aaf is availabe on PyPI as https://pypi.python.org/pypi/ckanext-aaf.
 To publish a new version to PyPI follow these steps:
@@ -164,3 +166,4 @@ To publish a new version to PyPI follow these steps:
 
        git tag 0.0.2
        git push --tags
+
