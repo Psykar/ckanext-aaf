@@ -1,2 +1,3 @@
 factory-boy
-mock
+mock>=2
+coverage
