@@ -113,35 +113,6 @@ coverage installed in your virtualenv (``pip install coverage``) then run::
     nosetests --nologcapture --with-pylons=test.ini --with-coverage --cover-package=ckanext.aaf --cover-inclusive --cover-erase --cover-tests
 
 
--------------------------------
-Registering ckanext-aaf on PyPI
--------------------------------
-
-ckanext-aaf should be availabe on PyPI as
-https://pypi.python.org/pypi/ckanext-aaf. If that link doesn't work, then
-you can register the project on PyPI for the first time by following these
-steps:
-
-1. Create a source distribution of the project::
-
-     python setup.py sdist
-
-2. Register the project::
-
-     python setup.py register
-
-3. Upload the source distribution to PyPI::
-
-     python setup.py sdist upload
-
-4. Tag the first release of the project on GitHub with the version number from
-   the ``setup.py`` file. For example if the version number in ``setup.py`` is
-   0.0.1 then do::
-
-       git tag 0.0.1
-       git push --tags
-
-
 --------------------------------------
 Releasing a New Version of ckanext-aaf
 --------------------------------------
