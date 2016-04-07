@@ -27,6 +27,8 @@ def decode_token(request):
         options=options,
         audience=config['ckanext.aaf.aud'],
         issuer=issuer,
+        # Leeway of 10 seconds with tokens to account for time skew
+        leeway=10
     )
 
     return verified_jwt
