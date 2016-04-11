@@ -10,7 +10,7 @@ from pylons import session
 
 
 def get_issuer():
-    if config.get('debug'):
+    if config.get('ckanext.aaf.debug'):
         issuer = 'https://rapid.test.aaf.edu.au'
     else:
         issuer = 'https://rapid.aaf.edu.au'

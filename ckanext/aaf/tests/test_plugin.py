@@ -153,7 +153,7 @@ class TestAAFController(FunctionalTestBase):
         assert get_issuer() == 'https://rapid.aaf.edu.au'
 
     def test_get_issuer_debug(self):
-        old_val = config.get('debug')
-        config['debug'] = True
+        old_val = config.get('ckanext.aaf.debug')
+        config['ckanext.aaf.debug'] = True
         assert(get_issuer() == 'https://rapid.test.aaf.edu.au')
-        config['debug'] =  old_val
+        config['ckanext.aaf.debug'] =  old_val
