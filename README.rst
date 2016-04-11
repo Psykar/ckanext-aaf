@@ -138,6 +138,6 @@ To publish a new version to PyPI follow these steps:
    the ``setup.py`` file. For example if the version number in ``setup.py`` is
    0.0.2 then do::
 
-       git tag 0.0.2
+       git tag -a 0.0.2
        git push --tags
 
