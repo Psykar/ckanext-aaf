@@ -76,7 +76,11 @@ class TestAAFController(FunctionalTestBase):
         for key, value in mock_login_args[0].items():
             # A decoded jwt token will have unix timestamps instead
             if isinstance(expected[key], datetime):
-                value = datetime.utcfromtimestamp(value).replace(microsecond=expected[key].microsecond)
+                # Microseconds and seconds get a bit of leeway (10 seconds)
+                value = datetime.utcfromtimestamp(value).replace(
+                    microsecond=expected[key].microsecond,
+                    second = expected[key].second
+                )
             assert_equal(expected[key], value, "key: {} --- {} != {}".format(key, expected[key], value))
 
     def test_token_decode(self):
