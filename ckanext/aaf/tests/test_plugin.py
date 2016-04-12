@@ -4,18 +4,18 @@ from datetime import datetime
 import ckan.plugins
 import jwt
 from ckan.lib.helpers import url_for
-from ckan.model.user import User
 from ckan.tests.helpers import FunctionalTestBase, _get_test_app
-from mock.mock import Mock
-from mock.mock import MagicMock
-from mock.mock import call
 from mock import patch
+from mock.mock import MagicMock
+from mock.mock import Mock
+from mock.mock import call
+from nose.tools import assert_equal
+from nose.tools import assert_raises
 from pylons import config
-from pylons import session
 
+import ckanext.aaf.controller
 from ckanext.aaf import plugin
 from ckanext.aaf.plugin import get_issuer
-import ckanext.aaf.controller
 
 
 class TestAAFController(FunctionalTestBase):
@@ -58,7 +58,7 @@ class TestAAFController(FunctionalTestBase):
     def test_login_redirect(self):
         url = url_for(controller='ckanext.aaf.controller:AAFController', action='login', came_from='')
         res = self.app.get(url)
-        assert(res.location == config.get('ckanext.aaf.url'))
+        assert_equal(res.location, config.get('ckanext.aaf.url'))
 
     def test_aaf_reply_tries_login(self):
         url = url_for(controller='ckanext.aaf.controller:AAFController', action='login', came_from='')
@@ -68,16 +68,16 @@ class TestAAFController(FunctionalTestBase):
             self.app.post(url, params={'assertion': token})
         # Check our login got called with a valid decoded JWT token.
         expected = self.get_token_payload()
-        assert(len(mock_login.mock_calls) == 1)
+        assert_equal(len(mock_login.mock_calls), 1)
         mock_login_method, mock_login_args, mock_login_kwargs = mock_login.mock_calls[0]
-        assert(mock_login_method == '')
-        assert(mock_login_kwargs == {})
-        assert(len(mock_login_args) == 1)
+        assert_equal(mock_login_method, '')
+        assert_equal(mock_login_kwargs, {})
+        assert_equal(len(mock_login_args), 1)
         for key, value in mock_login_args[0].items():
             # A decoded jwt token will have unix timestamps instead
             if isinstance(expected[key], datetime):
                 value = datetime.utcfromtimestamp(value).replace(microsecond=expected[key].microsecond)
-            assert(expected[key] == value)
+            assert_equal(expected[key], value, "key: {} --- {} != {}".format(key, expected[key], value))
 
     def test_token_decode(self):
         testuserid = 'theuseripassedin'
@@ -85,46 +85,60 @@ class TestAAFController(FunctionalTestBase):
         request = Mock(POST={'assertion': token})
         print(request.POST['assertion'])
         verified_jwt = plugin.decode_token(request)
-        assert(verified_jwt['sub'] == testuserid)
+        assert_equal(verified_jwt['sub'], testuserid)
 
     def test_login_with_token_exists(self):
         testuserid = 'atestusertopassin'
         token = self.get_token_payload(userid=testuserid)
 
-        mock_user = Mock(name=testuserid)
+        def mock_get_action(*args, **kwargs):
+            assert_equal(args, (), "Args were {}".format(args))
+            assert_equal(kwargs, {'data_dict': {'q': testuserid}}, "Kwargs were {}".format(kwargs))
+            return [{'name': testuserid}]
+
         with patch.object(plugin, 'session') as mock_session:
             with patch.object(ckan.plugins.toolkit, 'redirect_to'):
-
-                with patch.object(User, 'by_openid', return_value=mock_user):
+                with patch.object(ckan.plugins.toolkit, 'get_action', return_value=mock_get_action):
                     plugin.login_with_token(token)
 
         expected = [
-            call.__setitem__('aaf-user', mock_user.name),
+            call.__setitem__('aaf-user', testuserid),
             call.save()
         ]
-        assert(mock_session.mock_calls == expected)
+        assert_equal(
+            mock_session.mock_calls, expected,
+            "{} != {}".format(mock_session.mock_calls, expected))
 
     def test_login_with_token_new(self):
         testuserid = 'atestusertopassin'
         token = self.get_token_payload(userid=testuserid)
 
-        mock_user = Mock(name=testuserid)
 
-        def tookkit_create_mock(context=None, data_dict=None):
-            return mock_user
+        def mock_user_list(*args, **kwargs):
+            assert_equal(args, ())
+            assert_equal(kwargs, {'data_dict': {'q': testuserid}})
+            return []
+
+        def mock_user_create(*args, **kwargs):
+            assert_equal(args, ())
+            return {'name': testuserid}
+
+        def mock_get_action(action, data_dict=None):
+            if action == 'user_list':
+                return mock_user_list
+            elif action == 'user_create':
+                return mock_user_create
 
         with patch.object(plugin, 'session') as mock_session:
             with patch.object(ckan.plugins.toolkit, 'redirect_to'):
-                with patch.object(User, 'by_openid', side_effect=ckan.plugins.toolkit.ObjectNotFound):
-                    with patch.object(ckan.plugins.toolkit, 'get_action', return_value=tookkit_create_mock):
-                        plugin.login_with_token(token)
-
+                with patch.object(ckan.plugins.toolkit, 'get_action', new=mock_get_action):
+                    plugin.login_with_token(token)
 
         expected = [
-            call.__setitem__('aaf-user', mock_user.name),
+            call.__setitem__('aaf-user', testuserid),
             call.save()
         ]
-        assert(mock_session.mock_calls == expected)
+        assert_equal(mock_session.mock_calls, expected)
 
     def test_session_cleared(self):
         mock_session = MagicMock()
@@ -147,13 +161,29 @@ class TestAAFController(FunctionalTestBase):
 
         print mock_session.mock_calls
         print expected
-        assert(mock_session.mock_calls == expected)
+        assert_equal(mock_session.mock_calls, expected)
 
     def test_get_issuer_no_debug(self):
-        assert get_issuer() == 'https://rapid.aaf.edu.au'
+        assert_equal(get_issuer(), 'https://rapid.aaf.edu.au')
 
     def test_get_issuer_debug(self):
         old_val = config.get('ckanext.aaf.debug')
         config['ckanext.aaf.debug'] = True
-        assert(get_issuer() == 'https://rapid.test.aaf.edu.au')
-        config['ckanext.aaf.debug'] =  old_val
+        assert_equal(get_issuer(), 'https://rapid.test.aaf.edu.au')
+        config['ckanext.aaf.debug'] = old_val
+
+    def test_multiple_users_openid(self):
+        testuserid = 'atestusertopassin'
+        token = self.get_token_payload(userid=testuserid)
+
+        def mock_get_action(*args, **kwargs):
+            assert_equal(args, (), "Args were {}".format(args))
+            assert_equal(kwargs, {'data_dict': {'q': testuserid}}, "Kwargs were {}".format(kwargs))
+            return [{'name': testuserid}, {'name': 'a second one!'}]
+
+        with patch.object(plugin, 'session') as mock_session:
+            with patch.object(ckan.plugins.toolkit, 'redirect_to'):
+                with patch.object(ckan.plugins.toolkit, 'get_action', return_value=mock_get_action):
+                    assert_raises(Exception, plugin.login_with_token, token)
+
+        assert_equal(mock_session.mock_calls, [])

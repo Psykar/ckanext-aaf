@@ -4,7 +4,6 @@ import uuid
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import jwt
-from ckan.model.user import User
 from pylons import config
 from pylons import session
 
@@ -37,9 +36,11 @@ def decode_token(request):
 def login_with_token(token):
     attributes = token['https://aaf.edu.au/attributes']
     user_unique_id = token['sub']
-    try:
-        user = User.by_openid(user_unique_id)
-    except toolkit.ObjectNotFound:
+    users = toolkit.get_action('user_list')(data_dict=dict(q=user_unique_id))
+
+    if len(users) == 1:
+        user = users[0]
+    elif len(users) == 0:
         # Create the user.
         # The AAF id can contain invalid characters (for a ckan username)
         # So generate something safe and reasonably unlikely to collide
@@ -57,9 +58,11 @@ def login_with_token(token):
                 'openid': user_unique_id
             }
         )
-    if user:
-        session['aaf-user'] = user.name
-        session.save()
+    else:
+        raise Exception("Found invalid number of users with this AAF ID {}".format(user_unique_id))
+
+    session['aaf-user'] = user['name']
+    session.save()
     toolkit.redirect_to(controller='user', action='dashboard')
 
 
