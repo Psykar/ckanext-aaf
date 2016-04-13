@@ -86,8 +86,8 @@ For example (these settings will not work, register your own application!)::
     ckanext.aaf.secret = asdfasdf#$#$#$asdfasdf
     ckanext.aaf.aud = http://myappurl.edu.au
 
+Additionally there's an optional debug setting which defaults to False, which will enable use of aaf's test rapid connect service https://rapid.test.aaf.edu.au - (defaults to using the live one https://rapid.aaf.edu.au )::
 
-Additionally there's an optional debug setting which defaults to False, which will enable use of aaf's test rapid connect service https://rapid.test.aaf.edu.au - (defaults to using the live one https://rapid.aaf.edu.au )
     ckanext.aaf.debug = False
 ------------------------
 Development Installation
