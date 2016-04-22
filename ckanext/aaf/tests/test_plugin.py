@@ -3,7 +3,9 @@ from datetime import datetime
 
 import ckan.plugins
 import jwt
+from ckan import model
 from ckan.lib.helpers import url_for
+from ckan.tests import factories
 from ckan.tests.helpers import FunctionalTestBase, _get_test_app
 from mock import patch
 from mock.mock import MagicMock
@@ -16,6 +18,28 @@ from pylons import config
 import ckanext.aaf.controller
 from ckanext.aaf import plugin
 from ckanext.aaf.plugin import get_issuer
+
+
+def get_token_payload(userid=None):
+    if userid is None:
+        userid = 'adefaultid'
+    return {
+        'https://aaf.edu.au/attributes': {
+            'displayname': 'A user',
+            'mail': 'email@example.com',
+        },
+        'sub': userid,
+        'exp': datetime.utcnow(),
+        'nbf': datetime.utcnow(),
+        'iss': 'https://rapid.aaf.edu.au',
+        'aud': config.get('ckanext.aaf.aud'),
+        'iat': datetime.utcnow(),
+    }
+
+
+def get_test_token(userid=None):
+    payload = get_token_payload(userid=userid)
+    return jwt.encode(payload, config.get('ckanext.aaf.secret'))
 
 
 class TestAAFController(FunctionalTestBase):
@@ -34,27 +58,6 @@ class TestAAFController(FunctionalTestBase):
     def teardown():
         ckan.plugins.unload('aaf')
 
-    @staticmethod
-    def get_token_payload(userid=None):
-        if userid is None:
-            userid = 'adefaultid'
-        return {
-            'https://aaf.edu.au/attributes': {
-                'displayname': 'A user',
-                'mail': 'email@example.com',
-            },
-            'sub': userid,
-            'exp': datetime.utcnow(),
-            'nbf': datetime.utcnow(),
-            'iss': 'https://rapid.aaf.edu.au',
-            'aud': config.get('ckanext.aaf.aud'),
-            'iat': datetime.utcnow(),
-        }
-
-    def get_test_token(self, userid=None):
-        payload = self.get_token_payload(userid=userid)
-        return jwt.encode(payload, config.get('ckanext.aaf.secret'))
-
     def test_login_redirect(self):
         url = url_for(controller='ckanext.aaf.controller:AAFController', action='login', came_from='')
         res = self.app.get(url)
@@ -62,12 +65,12 @@ class TestAAFController(FunctionalTestBase):
 
     def test_aaf_reply_tries_login(self):
         url = url_for(controller='ckanext.aaf.controller:AAFController', action='login', came_from='')
-        token = self.get_test_token()
+        token = get_test_token()
         # Skip the actual login
         with patch.object(ckanext.aaf.controller, 'login_with_token') as mock_login:
             self.app.post(url, params={'assertion': token})
         # Check our login got called with a valid decoded JWT token.
-        expected = self.get_token_payload()
+        expected = get_token_payload()
         assert_equal(len(mock_login.mock_calls), 1)
         mock_login_method, mock_login_args, mock_login_kwargs = mock_login.mock_calls[0]
         assert_equal(mock_login_method, '')
@@ -79,21 +82,20 @@ class TestAAFController(FunctionalTestBase):
                 # Microseconds and seconds get a bit of leeway (10 seconds)
                 value = datetime.utcfromtimestamp(value).replace(
                     microsecond=expected[key].microsecond,
-                    second = expected[key].second
+                    second=expected[key].second
                 )
             assert_equal(expected[key], value, "key: {} --- {} != {}".format(key, expected[key], value))
 
     def test_token_decode(self):
         testuserid = 'theuseripassedin'
-        token = self.get_test_token(userid=testuserid)
+        token = get_test_token(userid=testuserid)
         request = Mock(POST={'assertion': token})
-        print(request.POST['assertion'])
         verified_jwt = plugin.decode_token(request)
         assert_equal(verified_jwt['sub'], testuserid)
 
     def test_login_with_token_exists(self):
         testuserid = 'atestusertopassin'
-        token = self.get_token_payload(userid=testuserid)
+        token = get_token_payload(userid=testuserid)
 
         def mock_get_action(*args, **kwargs):
             assert_equal(args, (), "Args were {}".format(args))
@@ -115,8 +117,7 @@ class TestAAFController(FunctionalTestBase):
 
     def test_login_with_token_new(self):
         testuserid = 'atestusertopassin'
-        token = self.get_token_payload(userid=testuserid)
-
+        token = get_token_payload(userid=testuserid)
 
         def mock_user_list(*args, **kwargs):
             assert_equal(args, ())
@@ -178,7 +179,7 @@ class TestAAFController(FunctionalTestBase):
 
     def test_multiple_users_openid(self):
         testuserid = 'atestusertopassin'
-        token = self.get_token_payload(userid=testuserid)
+        token = get_token_payload(userid=testuserid)
 
         def mock_get_action(*args, **kwargs):
             assert_equal(args, (), "Args were {}".format(args))
@@ -191,3 +192,56 @@ class TestAAFController(FunctionalTestBase):
                     assert_raises(Exception, plugin.login_with_token, token)
 
         assert_equal(mock_session.mock_calls, [])
+
+
+class TestAAFAuth(FunctionalTestBase):
+    def __init__(self):
+        self.app = None
+        self.user = None
+
+    def setup(self):
+        model.repo.rebuild_db()
+        self.user = factories.User()
+        self.app = _get_test_app()
+        ckan.plugins.load('aaf')
+
+    @staticmethod
+    def teardown():
+        ckan.plugins.unload('aaf')
+
+    def test_allow_creation_always(self):
+        old_val = config.get('ckanext.aaf.allow_creation_always')
+        config['ckan.auth.create_user_via_web'] = False
+        config['ckanext.aaf.allow_creation_always'] = True
+
+        testuserid = 'atestusertopassin'
+
+        token = get_test_token(userid=testuserid)
+
+        url = url_for(controller='ckanext.aaf.controller:AAFController', action='login', came_from='')
+        response = self.app.post(url, {'assertion': token})
+
+        assert_equal(response.status_int, 302)
+        response = response.follow()
+        assert_equal(response.request.url, 'http://localhost/dashboard')
+
+        config['ckanext.aaf.allow_creation_always'] = old_val
+        config['ckan.auth.create_user_via_web'] = True
+
+    def test_allow_creation_always_false(self):
+        old_val = config.get('ckanext.aaf.allow_creation_always')
+        config['ckan.auth.create_user_via_web'] = False
+        config['ckanext.aaf.allow_creation_always'] = False
+
+        testuserid = 'atestusertopassin'
+        token = get_token_payload(userid=testuserid)
+
+        with patch.object(plugin, 'session') as mock_session:
+            with patch.object(ckan.plugins.toolkit, 'redirect_to'):
+                with patch.object(plugin.helpers, 'flash_error') as flash_mock:
+                    plugin.login_with_token(token)
+
+        assert_equal(flash_mock.mock_calls, [call('Not authorized to create users')])
+
+        config['ckanext.aaf.allow_creation_always'] = old_val
+        config['ckan.auth.create_user_via_web'] = True

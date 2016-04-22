@@ -1,15 +1,18 @@
 import hashlib
 import uuid
 
+import ckan.lib.helpers as helpers
+import ckan.logic as logic
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import jwt
+from paste.deploy.converters import asbool
 from pylons import config
 from pylons import session
 
 
 def get_issuer():
-    if config.get('ckanext.aaf.debug'):
+    if asbool(config.get('ckanext.aaf.debug')):
         issuer = 'https://rapid.test.aaf.edu.au'
     else:
         issuer = 'https://rapid.aaf.edu.au'
@@ -46,24 +49,30 @@ def login_with_token(token):
         # So generate something safe and reasonably unlikely to collide
         # TODO (maybe use a uuid instead?)
         username = hashlib.md5(user_unique_id).hexdigest()
-        user = toolkit.get_action('user_create')(
-            context={'ignore_auth': True},
-            data_dict={
-                'name': username,
-                'fullname': attributes['displayname'],
-                'email': attributes['mail'],
-                'password': str(uuid.uuid4()),
-                # OpenID is a sensible place to put this even though it's not an OpenID, it's used
-                # in a very similar way to an OpenID.
-                'openid': user_unique_id
-            }
-        )
+        user_create = toolkit.get_action('user_create')
+        data_dict = {
+            'name': username,
+            'fullname': attributes['displayname'],
+            'email': attributes['mail'],
+            'password': str(uuid.uuid4()),
+            # OpenID is a sensible place to put this even though it's not an OpenID, it's used
+            # in a very similar way to an OpenID.
+            'openid': user_unique_id
+        }
+        if asbool(config.get('ckanext.aaf.allow_creation_always')):
+            user = user_create(context={'ignore_auth': True}, data_dict=data_dict)
+        else:
+            try:
+                user = user_create(context=None, data_dict=data_dict)
+            except logic.NotAuthorized as e:
+                helpers.flash_error(e.message)
+                return toolkit.redirect_to(controller='home', action='index')
     else:
         raise Exception("Found invalid number of users with this AAF ID {}".format(user_unique_id))
 
     session['aaf-user'] = user['name']
     session.save()
-    toolkit.redirect_to(controller='user', action='dashboard')
+    return toolkit.redirect_to(controller='user', action='dashboard')
 
 
 class AafPlugin(plugins.SingletonPlugin):

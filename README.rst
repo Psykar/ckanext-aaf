@@ -74,7 +74,7 @@ To install ckanext-aaf:
 Config Settings
 ---------------
 
-All the settings are required::
+These settings are required::
 
     ckanext.aaf.url = The unique URL given by AAF Rapid Connect (get one from rapid.aaf.edu.au or rapid.test.aaf.edu.au)
     ckanext.aaf.secret = The secret used to set up the above URL
@@ -86,9 +86,13 @@ For example (these settings will not work, register your own application!)::
     ckanext.aaf.secret = asdfasdf#$#$#$asdfasdf
     ckanext.aaf.aud = http://myappurl.edu.au
 
-Additionally there's an optional debug setting which defaults to False, which will enable use of aaf's test rapid connect service https://rapid.test.aaf.edu.au - (defaults to using the live one https://rapid.aaf.edu.au )::
-
+These settings are optional::
+    # Enables use of aaf's test rapid connect service https://rapid.test.aaf.edu.au - (defaults to using the live one https://rapid.aaf.edu.au )
     ckanext.aaf.debug = False
+    # Allows overriding of 'ckan.auth.create_user_via_web' so that AAF users can be
+    # created even if normal registrations are disabled. Defaults to False
+    ckanext.aaf.allow_creation_always = False
+
 ------------------------
 Development Installation
 ------------------------
