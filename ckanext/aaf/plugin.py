@@ -1,4 +1,4 @@
-import hashlib
+import re
 import uuid
 
 import ckan.lib.helpers as helpers
@@ -47,13 +47,13 @@ def login_with_token(token):
         # Create the user.
         # The AAF id can contain invalid characters (for a ckan username)
         # So generate something safe and reasonably unlikely to collide
-        # TODO (maybe use a uuid instead?)
-        username = hashlib.md5(user_unique_id).hexdigest()
+        username = '{}_aaf'.format(re.sub('[\W]+', '_', attributes['mail']))
         user_create = toolkit.get_action('user_create')
         data_dict = {
             'name': username,
             'fullname': attributes['displayname'],
             'email': attributes['mail'],
+            # Just give a random password
             'password': str(uuid.uuid4()),
             # OpenID is a sensible place to put this even though it's not an OpenID, it's used
             # in a very similar way to an OpenID.
