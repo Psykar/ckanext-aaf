@@ -1,0 +1,22 @@
+{% ckan_extends %}
+
+{% block primary_content_inner %}
+<h1 class="page-heading">
+  {% block page_heading %}{{ _('Register for an Account') }}{% endblock %}
+</h1>
+
+<p>
+Create an account using AAF:
+{% set login_url = h.url_for(controller='ckanext.aaf.controller:AAFController', action='login') %}
+<br/>
+<a tabindex="1" href="{{ login_url }}">
+<img src="https://rapid.aaf.edu.au/aaf_service_223x54.png"/>
+</a>
+</p>
+
+<p>Or provide the following details:</p>
+
+{{ c.form | safe }}
+
+
+{% endblock %}
