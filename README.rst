@@ -34,7 +34,7 @@
 ckanext-aaf
 ===========
 
-Allows AAF (Australian Acceess Federation) authentication to log into a CKAN installation.
+Allows AAF (Australian Access Federation) authentication to log into a CKAN installation.
 
 ------------
 Requirements
