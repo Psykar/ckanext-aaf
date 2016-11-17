@@ -70,7 +70,7 @@ def login_with_token(token):
     else:
         raise Exception("Found invalid number of users with this AAF ID {}".format(user_unique_id))
 
-    session['aaf-user'] = user['name']
+    session['aaf-user'] = user['id']
     session.save()
     return toolkit.redirect_to(controller='user', action='dashboard')
 
@@ -101,9 +101,14 @@ class AafPlugin(plugins.SingletonPlugin):
 
     @staticmethod
     def identify():
-        user = session.get('aaf-user')
+        user_id = session.get('aaf-user')
+
+        try:
+            user = toolkit.get_action('user_show')(data_dict={'id': user_id})
+        except logic.NotFound:
+            user = None
         if user:
-            toolkit.c.user = user
+            toolkit.c.user = user['name']
 
     @staticmethod
     def logout():

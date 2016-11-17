@@ -103,7 +103,7 @@ class TestAAFController(FunctionalTestBase):
                 'data_dict': {'q': testuserid},
                 'context': {'ignore_auth': True}
             }, "Kwargs were {}".format(kwargs))
-            return [{'name': testuserid}]
+            return [{'name': testuserid, 'id': testuserid}]
 
         with patch.object(plugin, 'session') as mock_session:
             with patch.object(ckan.plugins.toolkit, 'redirect_to'):
@@ -132,7 +132,7 @@ class TestAAFController(FunctionalTestBase):
 
         def mock_user_create(*args, **kwargs):
             assert_equal(args, ())
-            return {'name': testuserid}
+            return {'name': testuserid, 'id': testuserid}
 
         def mock_get_action(action, data_dict=None):
             if action == 'user_list':
