@@ -215,11 +215,14 @@ class TestAAFAuth(FunctionalTestBase):
     def teardown():
         ckan.plugins.unload('aaf')
 
-    def test_allow_creation_always(self):
-        old_val = config.get('ckanext.aaf.allow_creation_always')
-        config['ckan.auth.create_user_via_web'] = False
-        config['ckanext.aaf.allow_creation_always'] = True
 
+class TestAAFAuthAllowCreationAlways(TestAAFAuth):
+    @classmethod
+    def _apply_config_changes(cls, cfg):
+        cfg['ckan.auth.create_user_via_web'] = False
+        cfg['ckanext.aaf.allow_creation_always'] = True
+
+    def test_allow_creation_always(self):
         testuserid = 'atestusertopassin'
 
         token = get_test_token(userid=testuserid)
@@ -231,16 +234,25 @@ class TestAAFAuth(FunctionalTestBase):
         response = response.follow()
         assert_equal(response.request.url, 'http://localhost/dashboard')
 
-        config['ckanext.aaf.allow_creation_always'] = old_val
-        config['ckan.auth.create_user_via_web'] = True
+
+class TestAAFAuthAllowCreationFalse(TestAAFAuth):
+    @classmethod
+    def _apply_config_changes(cls, cfg):
+        cfg['ckan.auth.create_user_via_web'] = False
+        cfg['ckan.auth.create_user_via_api'] = False
+        cfg['ckanext.aaf.allow_creation_always'] = False
 
     def test_allow_creation_always_false(self):
-        old_val = config.get('ckanext.aaf.allow_creation_always')
-        config['ckan.auth.create_user_via_web'] = False
-        config['ckanext.aaf.allow_creation_always'] = False
-
         testuserid = 'atestusertopassin'
         token = get_token_payload(userid=testuserid)
+
+        print "always allow: {}, web creation: {}, api creation: {}".format(
+            config.get('ckanext.aaf.allow_creation_always'
+                       ),
+            config.get('ckan.auth.create_user_via_web'),
+            config.get('ckan.auth.create_user_via_api')
+        )
+
 
         with patch.object(plugin, 'session') as mock_session:
             with patch.object(ckan.plugins.toolkit, 'redirect_to'):
@@ -248,6 +260,3 @@ class TestAAFAuth(FunctionalTestBase):
                     plugin.login_with_token(token)
 
         assert_equal(flash_mock.mock_calls, [call('Not authorized to create users')])
-
-        config['ckanext.aaf.allow_creation_always'] = old_val
-        config['ckan.auth.create_user_via_web'] = True
