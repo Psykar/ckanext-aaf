@@ -39,7 +39,7 @@ def decode_token(request):
 def login_with_token(token):
     attributes = token['https://aaf.edu.au/attributes']
     user_unique_id = token['sub']
-    users = toolkit.get_action('user_list')(data_dict=dict(q=user_unique_id))
+    users = toolkit.get_action('user_list')(data_dict=dict(q=user_unique_id), context={'ignore_auth': True})
 
     if len(users) == 1:
         user = users[0]
