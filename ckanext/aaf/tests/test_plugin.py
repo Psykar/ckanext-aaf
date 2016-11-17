@@ -99,7 +99,10 @@ class TestAAFController(FunctionalTestBase):
 
         def mock_get_action(*args, **kwargs):
             assert_equal(args, (), "Args were {}".format(args))
-            assert_equal(kwargs, {'data_dict': {'q': testuserid}}, "Kwargs were {}".format(kwargs))
+            assert_equal(kwargs, {
+                'data_dict': {'q': testuserid},
+                'context': {'ignore_auth': True}
+            }, "Kwargs were {}".format(kwargs))
             return [{'name': testuserid}]
 
         with patch.object(plugin, 'session') as mock_session:
@@ -121,7 +124,10 @@ class TestAAFController(FunctionalTestBase):
 
         def mock_user_list(*args, **kwargs):
             assert_equal(args, ())
-            assert_equal(kwargs, {'data_dict': {'q': testuserid}})
+            assert_equal(kwargs, {
+                'data_dict': {'q': testuserid},
+                'context': {'ignore_auth': True}
+            })
             return []
 
         def mock_user_create(*args, **kwargs):
